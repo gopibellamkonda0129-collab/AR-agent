@@ -1,0 +1,5 @@
+CUSTOMER NAME,INVOICE NUMBER,DUE DATE,AMOUNT,PAID,STATUS,EMAIL
+Omega Logistics,INV-2201,2026-06-19,18500,0,open,ap@omega-logistics.com
+Omega Logistics,INV-2180,2026-05-22,9200,0,overdue,ap@omega-logistics.com
+Riverside Inn,INV-2215,2026-08-01,3400,2000,partial,finance@riverside-inn.us
+Blue Harbor Co,INV-2220,2026-08-24,760,0,sent,billing@blueharbor.co

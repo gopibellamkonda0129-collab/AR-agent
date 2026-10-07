@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#10131d"/>
+  <rect x="3" y="3" width="58" height="58" rx="11" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1"/>
+  <rect x="3" y="3" width="58" height="30" rx="11" fill="#ffffff" fill-opacity="0.04"/>
+  <text x="31" y="41" text-anchor="middle" font-family="Inter, SF Pro Text, system-ui, sans-serif" font-weight="600" font-size="25" letter-spacing="-0.7" fill="#f2f4f8" style="font-variant-ligatures:none">AR</text>
+  <path d="M45 44.5 L54 35.5 M48.5 35.5 L54 35.5 L54 41" fill="none" stroke="#7c8cff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="4" y="52" width="56" height="1" fill="#ffffff" fill-opacity="0.02"/>
+</svg>

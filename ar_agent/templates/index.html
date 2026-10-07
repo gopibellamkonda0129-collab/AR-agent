@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AR Agent — Accounts Receivable AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a12; --panel:rgba(255,255,255,.045); --panel-solid:#121a2b;
+    --border:rgba(148,163,184,.16); --border-strong:rgba(148,163,184,.32);
+    --text:#e7edf7; --muted:#93a3ba; --faint:#5c6b85;
+    --accent:#34d0ff; --accent-2:#8b7bff; --green:#3ee6a0; --yellow:#ffc853;
+    --red:#ff6b81; --radius:16px;
+    --shadow:0 12px 40px rgba(2,6,23,.55);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scrollbar-color:#2a3a52 var(--bg)}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Inter",ui-sans-serif,system-ui,sans-serif;
+    line-height:1.55; min-height:100vh; overflow-x:hidden;
+  }
+  /* ---- aurora background ---- */
+  .aurora{position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background:
+      radial-gradient(1000px 600px at 15% -10%, rgba(52,208,255,.14), transparent 60%),
+      radial-gradient(900px 500px at 90% 0%, rgba(139,123,255,.12), transparent 55%),
+      radial-gradient(700px 700px at 50% 110%, rgba(62,230,160,.07), transparent 55%),
+      var(--bg);
+  }
+  .blob{position:absolute; border-radius:50%; filter:blur(90px); opacity:.5; mix-blend-mode:screen; animation:float 18s ease-in-out infinite}
+  .blob.b1{width:420px;height:420px;background:#1c86a8; top:-120px; left:-80px}
+  .blob.b2{width:380px;height:380px;background:#4b3fbf; top:12%; right:-120px; animation-delay:-6s}
+  .blob.b3{width:330px;height:330px;background:#0f7a5c; bottom:-120px; left:30%; animation-delay:-12s}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.12)}}
+  .grid-overlay{position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);
+    background-size:44px 44px; mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+
+  .wrap{max-width:1240px; margin:0 auto; padding:36px 24px 96px; position:relative}
+
+  /* ---- header ---- */
+  header{display:flex; align-items:center; gap:16px; margin-bottom:34px}
+  .logo{width:52px;height:52px;border-radius:15px; flex:none;
+    background:conic-gradient(from 220deg,var(--accent),var(--accent-2),var(--green),var(--accent));
+    display:grid;place-items:center; box-shadow:0 8px 28px rgba(52,208,255,.35)}
+  .logo svg{width:28px;height:28px}
+  header h1{font-family:"Space Grotesk",sans-serif; font-size:26px; letter-spacing:-.02em}
+  header p{color:var(--muted); font-size:14px}
+  .head-right{margin-left:auto; display:flex; gap:10px}
+  .live-dot{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px;
+    background:var(--panel); border:1px solid var(--border); padding:8px 14px; border-radius:999px}
+  .live-dot i{width:8px;height:8px;border-radius:50%;background:var(--green); box-shadow:0 0 0 0 rgba(62,230,160,.6); animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(62,230,160,.5)}70%{box-shadow:0 0 0 9px rgba(62,230,160,0)}100%{box-shadow:0 0 0 0 rgba(62,230,160,0)}}
+
+  /* ---- cards ---- */
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+    backdrop-filter:blur(14px); border:1px solid var(--border); border-radius:var(--radius);
+    padding:26px; box-shadow:var(--shadow); margin-bottom:26px; position:relative; overflow:hidden}
+  .card::before{content:""; position:absolute; inset:0 0 auto 0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)}
+  .card .title{font-family:"Space Grotesk",sans-serif; font-size:15px; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:18px; display:flex; gap:8px; align-items:center}
+
+  /* ---- dropzone ---- */
+  .dropzone{border:2px dashed var(--border-strong); border-radius:14px; padding:46px 24px; text-align:center;
+    transition:all .25s ease; cursor:pointer}
+  .dropzone:hover,.dropzone.drag{border-color:var(--accent); background:rgba(52,208,255,.06); transform:translateY(-1px)}
+  .dz-icon{width:64px;height:64px;margin:0 auto 16px;border-radius:18px;display:grid;place-items:center;
+    background:linear-gradient(135deg,rgba(52,208,255,.18),rgba(139,123,255,.18)); border:1px solid var(--border-strong)}
+  .dz-icon svg{width:32px;height:32px}
+  .dropzone h2{font-family:"Space Grotesk",sans-serif; font-size:18px; margin-bottom:6px}
+  .dropzone .muted{color:var(--muted); font-size:13px}
+  .formats{margin-top:14px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px}
+  .fmt{font-size:11px; font-weight:600; color:var(--muted); background:rgba(148,163,184,.08);
+    border:1px solid var(--border); padding:3px 9px; border-radius:999px}
+  input[type=file]{display:none}
+
+  /* file chips */
+  .files{margin-top:18px; display:grid; gap:8px}
+  .fchip{display:flex; align-items:center; gap:12px; background:rgba(2,6,23,.45);
+    border:1px solid var(--border); border-radius:11px; padding:10px 14px; animation:fadeUp .3s ease}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+  .fext{width:38px;height:38px;border-radius:9px; flex:none; display:grid; place-items:center;
+    font-size:10px; font-weight:800; text-transform:uppercase; color:#04121c;
+    background:linear-gradient(135deg,var(--accent),#7fd6ff)}
+  .fext.v{background:linear-gradient(135deg,#7ce7ab,#3ee6a0)}
+  .fext.p{background:linear-gradient(135deg,#ff8f6b,#ff6b81)}
+  .fext.w{background:linear-gradient(135deg,#7fb7ff,#5b8bff)}
+  .fext.t{background:linear-gradient(135deg,#c79bff,#8b7bff)}
+  .fext.i{background:linear-gradient(135deg,#ffd76b,#ffc853)}
+  .fname{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .fmeta{font-size:11px; color:var(--muted)}
+  .fdel{margin-left:auto; background:none; border:0; color:var(--faint); cursor:pointer; font-size:16px; line-height:1}
+  .fdel:hover{color:var(--red)}
+
+  /* buttons */
+  .btn{display:inline-flex; align-items:center; gap:8px; border:0; cursor:pointer; text-decoration:none;
+    font-family:"Inter",sans-serif; font-size:14px; font-weight:700; padding:11px 20px; border-radius:11px;
+    transition:transform .15s ease, box-shadow .2s ease; color:#04121c}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#7fd6ff); box-shadow:0 8px 24px rgba(52,208,255,.32)}
+  .btn.primary:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(52,208,255,.45)}
+  .btn.primary:disabled{opacity:.45; cursor:not-allowed; transform:none}
+  .btn.ghost{background:rgba(148,163,184,.1); color:var(--text); border:1px solid var(--border)}
+  .btn.ghost:hover{background:rgba(148,163,184,.18)}
+  .btn svg{width:16px;height:16px}
+  .actions{margin-top:20px; display:flex; gap:12px; flex-wrap:wrap}
+
+  /* ---- stats ---- */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:26px}
+  .stat{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid var(--border); border-radius:14px; padding:18px 18px 14px; position:relative; overflow:hidden}
+  .stat::after{content:""; position:absolute; inset:0 0 auto 0; height:3px; border-radius:2px; opacity:.9}
+  .stat.c-blue::after{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  .stat.c-green::after{background:linear-gradient(90deg,var(--green),#7ce7ab)}
+  .stat.c-yellow::after{background:linear-gradient(90deg,var(--yellow),#ff8f6b)}
+  .stat.c-red::after{background:linear-gradient(90deg,var(--red),#ff8f6b)}
+  .stat .n{font-family:"Space Grotesk",sans-serif; font-size:24px; font-weight:700; letter-spacing:-.01em}
+  .stat .l{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.07em; margin-top:2px; font-weight:600}
+  .stat .sub{font-size:10px; color:var(--faint); margin-top:2px}
+
+  /* ---- table ---- */
+  .table-wrap{overflow:auto; border-radius:12px; border:1px solid var(--border)}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:920px}
+  thead th{position:sticky; top:0; background:rgba(7,10,18,.92); backdrop-filter:blur(8px);
+    color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+    padding:12px 14px; text-align:left; border-bottom:1px solid var(--border-strong); z-index:2; white-space:nowrap}
+  tbody td{padding:13px 14px; border-bottom:1px solid var(--border); vertical-align:top}
+  tbody tr{transition:background .15s ease}
+  tbody tr:hover{background:rgba(52,208,255,.04)}
+  tbody tr:last-child td{border-bottom:0}
+  .cust strong{font-size:13.5px}
+  .cust .mail{font-size:11px; color:var(--faint); margin-top:1px}
+  .amt{font-family:"Space Grotesk",sans-serif; font-size:14px; font-weight:700; white-space:nowrap}
+  .days{font-variant-numeric:tabular-nums}
+  .reason{color:#c6d2e5; max-width:300px; font-size:12.5px}
+  .action-cell{max-width:260px; font-size:12.5px; color:#c6d2e5}
+
+  .pill{display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px;
+    font-size:10.5px; font-weight:700; letter-spacing:.05em; white-space:nowrap}
+  .pill i{width:6px;height:6px;border-radius:50%}
+  .pill.critical{background:rgba(255,107,129,.14); color:var(--red); border:1px solid rgba(255,107,129,.35)}
+  .pill.critical i{background:var(--red); box-shadow:0 0 8px var(--red)}
+  .pill.high{background:rgba(255,200,83,.12); color:var(--yellow); border:1px solid rgba(255,200,83,.35)}
+  .pill.high i{background:var(--yellow); box-shadow:0 0 8px var(--yellow)}
+  .pill.medium{background:rgba(52,208,255,.12); color:var(--accent); border:1px solid rgba(52,208,255,.35)}
+  .pill.medium i{background:var(--accent)}
+  .pill.low{background:rgba(62,230,160,.12); color:var(--green); border:1px solid rgba(62,230,160,.35)}
+  .pill.low i{background:var(--green)}
+
+  .txt-btn{background:none; border:1px solid var(--border); color:var(--accent); cursor:pointer;
+    font-size:12px; font-weight:600; border-radius:8px; padding:6px 12px; white-space:nowrap; transition:all .15s}
+  .txt-btn:hover{border-color:var(--accent); background:rgba(52,208,255,.08)}
+  .src-tag{display:inline-block; font-size:10px; color:var(--faint); background:rgba(148,163,184,.08);
+    border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-top:6px}
+
+  /* ---- warnings ---- */
+  .warnbox{border:1px solid rgba(255,200,83,.3); background:rgba(255,200,83,.06); border-radius:12px; padding:16px 18px; margin-bottom:26px}
+  .warnbox b{color:var(--yellow); font-size:13px}
+  .warnbox ul{margin:8px 0 0 18px; color:var(--muted); font-size:12.5px}
+  .errorbox{border:1px solid rgba(255,107,129,.35); background:rgba(255,107,129,.06); border-radius:12px; padding:16px 18px; margin-bottom:26px}
+  .errorbox b{color:var(--red); font-size:13px}
+  .errorbox ul{margin:8px 0 0 18px; color:#efb9c2; font-size:12.5px}
+
+  /* file status chips */
+  .fstatus{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px}
+  .fstatus .chip{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted);
+    background:var(--panel); border:1px solid var(--border); padding:6px 11px; border-radius:999px; max-width:320px}
+  .fstatus .chip b{color:var(--text); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .fstatus .chip.ok i{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+  .fstatus .chip.err i{width:7px;height:7px;border-radius:50%;background:var(--red);flex:none}
+  .fstatus .chip.err{border-color:rgba(255,107,129,.4); color:#e9a6b0}
+
+  /* ---- modal ---- */
+  .modal-veil{position:fixed; inset:0; z-index:60; background:rgba(3,6,14,.72); backdrop-filter:blur(6px);
+    display:grid; place-items:center; padding:22px; opacity:0; pointer-events:none; transition:opacity .2s ease}
+  .modal-veil.open{opacity:1; pointer-events:auto}
+  .modal{width:min(680px,100%); max-height:86vh; display:flex; flex-direction:column;
+    background:var(--panel-solid); border:1px solid var(--border-strong); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden}
+  .modal-head{display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--border)}
+  .modal-head strong{font-size:15px}
+  .modal-head .ma{font-size:11.5px; color:var(--faint); margin-top:1px}
+  .modal-close{margin-left:auto; background:none; border:0; color:var(--muted); cursor:pointer; font-size:22px; line-height:1}
+  .modal-body{padding:20px; overflow:auto}
+  .email{white-space:pre-wrap; font-family:"Cascadia Code","JetBrains Mono",Consolas,ui-monospace,monospace;
+    font-size:12.5px; line-height:1.6; color:#d7e2f5; background:rgba(2,6,23,.55); border:1px solid var(--border);
+    border-radius:10px; padding:16px}
+  .modal-foot{display:flex; gap:10px; padding:14px 20px; border-top:1px solid var(--border)}
+  .copy-ok{color:var(--green); font-size:12.5px; display:flex; align-items:center; gap:6px}
+
+  /* ---- progress overlay ---- */
+  .progress-veil{position:fixed; inset:0; z-index:80; background:rgba(4,7,15,.82); backdrop-filter:blur(8px);
+    display:none; place-items:center}
+  .progress-veil.active{display:grid}
+  .progress-card{width:min(420px,92%); text-align:center;
+    background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+    border:1px solid var(--border-strong); border-radius:18px; padding:34px 28px}
+  .spinner{width:52px;height:52px;margin:0 auto 20px;border-radius:50%;
+    border:3px solid rgba(52,208,255,.15); border-top-color:var(--accent); animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress-card h2{font-family:"Space Grotesk",sans-serif; font-size:18px; margin-bottom:6px}
+  .progress-card .step{color:var(--muted); font-size:13px; min-height:20px; margin-bottom:14px}
+  .bar{height:6px;border-radius:99px;background:rgba(148,163,184,.15);overflow:hidden;position:relative}
+  .bar i{position:absolute; inset:0; width:35%; border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2)); animation:slide 1.1s ease-in-out infinite}
+  @keyframes slide{0%{left:-35%}100%{left:100%}}
+
+  .foot{color:var(--faint); font-size:12px; text-align:center; margin-top:10px}
+  .flash{background:rgba(255,200,83,.1); border:1px solid rgba(255,200,83,.35); color:var(--yellow);
+    padding:12px 18px; border-radius:11px; margin-bottom:20px; font-size:13px}
+  .muted{color:var(--muted)}
+  .hl{color:var(--accent)}
+  .hidden{display:none}
+  .divider{height:1px;background:var(--border);margin:20px 0 18px}
+  .note{font-size:12px; color:var(--muted); margin-top:14px}
+  .note code{background:rgba(148,163,184,.1); padding:1px 6px; border-radius:5px; font-size:11px}
+</style>
+</head>
+<body>
+<div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grid-overlay"></div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#04121c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Accounts-Receivable Agent</h1>
+      <p>Your AI collections employee — turn raw invoices into prioritized action.</p>
+    </div>
+    <div class="head-right">
+      <span class="live-dot"><i></i> AI pipeline online</span>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages() %}
+    {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+  {% endwith %}
+
+  <!-- upload card -->
+  <div class="card" id="uploadCard">
+    <div class="title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Ingest invoices
+    </div>
+
+    <div class="dropzone" id="dz">
+      <div class="dz-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          <path d="M12 6v3M7 12h10" opacity=".4"/>
+        </svg>
+      </div>
+      <h2>Drop your invoice files here</h2>
+      <p class="muted">or <span class="hl" style="text-decoration:underline">click to browse</span> — mix any formats, upload as many as you need</p>
+      <div class="formats">
+        <span class="fmt">CSV</span><span class="fmt">XLSX</span><span class="fmt">XLS</span><span class="fmt">PDF</span>
+        <span class="fmt">DOCX</span><span class="fmt">DOC</span><span class="fmt">TXT</span>
+        <span class="fmt">PNG</span><span class="fmt">JPG</span><span class="fmt">screenshots</span><span class="fmt">scans</span>
+      </div>
+      <input type="file" id="fileInput" name="files" accept=".csv,.xlsx,.xls,.xlsm,.pdf,.docx,.doc,.txt,.tsv,.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp" multiple>
+    </div>
+
+    <div class="files hidden" id="fileList"></div>
+
+    <div class="actions">
+      <button class="btn primary" id="analyzeBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 3v18M5 3l14 8-14 8"/></svg>
+        Analyze invoices
+      </button>
+      <button class="btn ghost" id="clearBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <p class="note">What we do: <code>read every file</code> → <code>detect the invoice columns</code> (variants like "Total", "Due Date", "Amount Paid" are recognized) → <code>calculate overdue & risk</code> → <code>draft a collection email per customer</code>.</p>
+  </div>
+
+  {% if has_errors %}
+  <div class="errorbox">
+    <b>No invoices could be read from these files.</b>
+    <ul>
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if file_status %}
+  <div class="fstatus">
+    {% for fs in file_status %}
+    <span class="chip {{ fs.status }}"><i></i><b>{{ fs.name }}</b> · {{ fs.detail }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if has_data %}
+  <!-- stats -->
+  <div class="stats">
+    <div class="stat c-blue"><div class="n">{{ summary.files }}</div><div class="l">Files read</div></div>
+    <div class="stat c-blue"><div class="n">{{ summary.customers }}</div><div class="l">Need attention</div></div>
+    <div class="stat c-blue"><div class="n">{{ summary.invoices }}</div><div class="l">Open invoices</div></div>
+    <div class="stat c-green"><div class="n">${{ "{:,.0f}".format(summary.total_outstanding) }}</div><div class="l">Total outstanding</div></div>
+    <div class="stat c-red"><div class="n">{{ summary.critical }}</div><div class="l">Critical</div></div>
+    <div class="stat c-yellow"><div class="n">{{ summary.high }}</div><div class="l">High priority</div></div>
+  </div>
+
+  {% if warnings %}
+  <div class="warnbox">
+    <b>Heads-up — a few rows needed fixing:</b>
+    <ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <!-- results -->
+  <div class="card">
+    <div class="title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z"/></svg>
+      Collections triage
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th><th>Amount</th><th>Days overdue</th><th>Priority</th>
+            <th>Risk</th><th>Why it matters</th><th>Recommended action</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td class="cust">
+              <strong>{{ r.customer_name }}</strong>
+              <div class="mail">{{ r.contact_email or "no email on file" }}</div>
+            </td>
+            <td class="amt">${{ "{:,.2f}".format(r.total_outstanding) }}</td>
+            <td class="days">{{ r.days_overdue }}</td>
+            <td><span class="pill {{ r.risk_level }}"><i></i>{{ r.priority }}</span></td>
+            <td class="muted" style="text-transform:capitalize">{{ r.risk_level }}</td>
+            <td class="reason">{{ r.reason }}</td>
+            <td class="action-cell">{{ r.recommended_action }}</td>
+            <td style="white-space:nowrap">
+              <button class="txt-btn email-open" data-i="{{ loop.index0 }}">Draft email</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <form method="post" action="/download" style="margin:0">
+        <input type="hidden" name="data" value='{{ rows|tojson }}'>
+        <button class="btn primary" type="submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download triage CSV
+        </button>
+      </form>
+      <form method="post" action="/export" style="margin:0">
+        <input type="hidden" name="data" value='{{ rows|tojson }}'>
+        <button class="btn ghost" type="submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V4M4 20h16M8 16l4-4 4 4M12 12v8"/></svg>
+          Export emails (.txt)
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- email modal -->
+<div class="modal-veil" id="emailVeil">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <strong id="mCust">Customer</strong>
+        <div class="ma" id="mSub"></div>
+      </div>
+      <button class="modal-close" id="mClose">&times;</button>
+    </div>
+    <div class="modal-body"><pre class="email" id="mBody"></pre></div>
+    <div class="modal-foot">
+      <button class="btn primary" id="mCopy" type="button">Copy email</button>
+      <span class="copy-ok hidden" id="mCopied">✓ Copied to clipboard</span>
+      <button class="btn ghost" id="mDone" type="button" style="margin-left:auto">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- progress overlay -->
+<div class="progress-veil" id="progVeil">
+  <div class="progress-card">
+    <div class="spinner"></div>
+    <h2>Working your invoices</h2>
+    <div class="step" id="progStep">Reading files…</div>
+    <div class="bar"><i></i></div>
+  </div>
+</div>
+
+<p class="foot">AR Agent · v0.2 · reads CSV · XLSX · XLS · PDF · DOCX · DOC · TXT · images (OCR) — upload any mix.</p>
+
+{% if has_data %}
+<script type="application/json" id="rows-data">{{ rows|tojson }}</script>
+{% endif %}
+<script>
+(function(){
+  "use strict";
+
+  const steps = [
+    "Reading files…",
+    "Normalizing to the ledger schema…",
+    "Scoring overdue, risk & priority…",
+    "Writing collection emails…",
+    "Finalizing triage…"
+  ];
+
+  /* ---------- upload handling ---------- */
+  const dz = document.getElementById("dz");
+  const input = document.getElementById("fileInput");
+  const list = document.getElementById("fileList");
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const clearBtn = document.getElementById("clearBtn");
+
+  let files = [];
+
+  const extClass = e =>
+    ["csv","tsv"].includes(e) ? "v" :
+    ["pdf"].includes(e) ? "p" :
+    ["doc","docx"].includes(e) ? "w" :
+    ["txt"].includes(e) ? "t" :
+    ["png","jpg","jpeg","gif","bmp","tiff","webp"].includes(e) ? "i" : "";
+  const extName = e => (extClass(e) === "v") ? (e==="csv"?"csv":e.toUpperCase()) :
+                        (extClass(e) === "p") ? "pdf" :
+                        (extClass(e) === "w") ? "doc" :
+                        (extClass(e) === "t") ? "txt" : "img";
+
+  const fmt = b => b > 1048576 ? (b/1048576).toFixed(1)+" MB" : (b/1024).toFixed(0)+" KB";
+
+  function renderList(){
+    list.classList.toggle("hidden", files.length === 0);
+    list.innerHTML = files.map((f,i)=>`
+      <div class="fchip">
+        <div class="fext ${extClass(f.ext)}">${extName(f.ext)}</div>
+        <div style="min-width:0;max-width:60%">
+          <div class="fname">${f.file.name}</div>
+          <div class="fmeta">${fmt(f.file.size)}</div>
+        </div>
+        <button class="fdel" data-i="${i}" title="Remove">&times;</button>
+      </div>`).join("");
+    analyzeBtn.disabled = files.length === 0;
+  }
+
+  function addFiles(listOfFiles){
+    const seen = new Set(files.map(f=>f.file.name));
+    for (const file of listOfFiles){
+      if (seen.has(file.name)) continue;
+      seen.add(file.name);
+      const dot = file.name.lastIndexOf(".");
+      const ext = dot >= 0 ? file.name.slice(dot+1).toLowerCase() : "";
+      files.push({file, ext});
+    }
+    renderList();
+  }
+
+  input.addEventListener("change", () => { addFiles(input.files); input.value = ""; });
+  dz.addEventListener("click", () => input.click());
+
+  ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("drag"); }));
+  dz.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+
+  list.addEventListener("click", e => {
+    if (e.target.classList.contains("fdel")){
+      files.splice(+e.target.dataset.i, 1);
+      renderList();
+    }
+  });
+  if (clearBtn) clearBtn.addEventListener("click", () => { files = []; renderList(); });
+
+  /* ---------- progress overlay + submit ---------- */
+  const veil = document.getElementById("progVeil");
+  const stepEl = document.getElementById("progStep");
+  let stepTimer = null;
+
+  analyzeBtn.addEventListener("click", () => {
+    if (!files.length) return;
+    veil.classList.add("active");
+    let i = 0;
+    stepEl.textContent = steps[0];
+    stepTimer = setInterval(() => {
+      i = Math.min(i + 1, steps.length - 1);
+      stepEl.textContent = steps[i];
+    }, 900);
+
+    const fd = new FormData();
+    files.forEach(f => fd.append("files", f.file, f.file.name));
+
+    fetch("/analyze", { method: "POST", body: fd })
+      .then(r => r.text())
+      .then(html => {
+        clearInterval(stepTimer);
+        document.open(); document.write(html); document.close();
+        window.__AR_INIT__ && window.__AR_INIT__();
+      })
+      .catch(() => {
+        clearInterval(stepTimer);
+        veil.classList.remove("active");
+        alert("Something went wrong analyzing the files. Please try again.");
+      });
+  });
+
+  /* ---------- email modal ---------- */
+  function bindModal(rowsEl){
+    const veilM = document.getElementById("emailVeil");
+    if (!veilM) return;
+    const body = document.getElementById("mBody");
+    const cust = document.getElementById("mCust");
+    const sub  = document.getElementById("mSub");
+    const close = () => veilM.classList.remove("open");
+    document.getElementById("mClose").addEventListener("click", close);
+    document.getElementById("mDone").addEventListener("click", close);
+    veilM.addEventListener("click", e => { if (e.target === veilM) close(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+
+    document.querySelectorAll(".email-open").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const r = rowsEl[+btn.dataset.i];
+        body.textContent = r.draft_email;
+        cust.textContent = r.customer_name;
+        sub.textContent = "Priority " + r.priority + " · " + r.risk_level + " risk · $" + r.total_outstanding.toLocaleString();
+        document.getElementById("mCopied").classList.add("hidden");
+        veilM.classList.add("open");
+      });
+    });
+    document.getElementById("mCopy").addEventListener("click", () => {
+      navigator.clipboard.writeText(body.textContent).then(() => {
+        document.getElementById("mCopied").classList.remove("hidden");
+        setTimeout(() => document.getElementById("mCopied").classList.add("hidden"), 2200);
+      });
+    });
+  }
+
+  /* ---------- boot ---------- */
+  window.__AR_INIT__ = function(){
+    const rowsEl = document.getElementById("rows-data");
+    if (rowsEl) bindModal(JSON.parse(rowsEl.textContent));
+  };
+  window.__AR_INIT__();
+})();</script>
+</body>
+</html>

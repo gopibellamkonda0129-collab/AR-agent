@@ -1,0 +1,11 @@
+customer_name,invoice_number,invoice_date,due_date,amount,amount_paid,status,contact_email
+ABC Ltd,INV-1042,2026-05-12,2026-06-11,25000,12600,partial,accounts@abc.com
+ABC Ltd,INV-1019,2026-03-02,2026-04-01,18000,18000,paid,accounts@abc.com
+ABC Ltd,INV-1050,2026-06-20,2026-07-20,12000,0,open,accounts@abc.com
+Brightpath Retail,INV-1088,2026-07-14,2026-08-13,4200,0,open,ap@brightpath.co
+Brightpath Retail,INV-1066,2026-06-01,2026-06-30,3800,1900,partial,ap@brightpath.co
+Cedar & Co,INV-1091,2026-07-28,2026-08-27,980,0,open,billing@cedarco.com
+Northwind Trading,INV-1077,2026-06-10,2026-07-10,54000,0,overdue,purchase@northwind.io
+Northwind Trading,INV-1072,2026-05-28,2026-06-27,31000,15000,partial,purchase@northwind.io
+Northwind Trading,INV-1060,2026-05-01,2026-05-31,22000,0,overdue,purchase@northwind.io
+Golden Peak LLC,INV-1090,2026-07-25,2026-08-24,1500,0,pending,finance@goldenpeak.com
