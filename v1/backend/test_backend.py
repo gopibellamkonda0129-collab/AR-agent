@@ -6,6 +6,7 @@ This file asserts the full product contract: signals, promises, daily action
 queue, follow-up drafts, payments/recovery, forecast, and the weekly brief.
 """
 import sys
+from pathlib import Path
 
 from urllib.parse import quote
 
@@ -32,7 +33,7 @@ def check(label, ok, detail=""):
         failures.append(label)
 
 
-SAMPLE_CSV = r"C:\Users\gopik\Downloads\AI\ar_agent\sample_data\customers.csv"
+SAMPLE_CSV = Path(__file__).resolve().parents[2] / "ar_agent" / "sample_data" / "customers.csv"
 
 # health
 r = client.get("/health")

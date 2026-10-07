@@ -32,5 +32,6 @@ Thumbs.db
 
 # Misc
 coverage/
-.vercel__pycache__/ 
-*.pyc 
+.vercel
+__pycache__/
+*.pyc
